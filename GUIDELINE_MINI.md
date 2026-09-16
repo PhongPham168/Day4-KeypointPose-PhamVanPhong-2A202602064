@@ -1,57 +1,49 @@
-# Mini guideline - nhóm: ______  |  người gán: ______  |  ngày: ______
+# GUIDELINE_MINI — Luật gán keypoint (Day 4)
 
-> Điền file này **trong lúc** gán nhãn, không phải sau khi xong. Mỗi lần bạn dừng lại
-> hơn 10 giây để phân vân, đó là một dòng phải ghi vào đây.
+Người gán: Phạm Văn Phong · Bộ 20 ảnh train, chuẩn COCO-17.
+Mục đích: thống nhất cách xử lý các khớp khó nhìn, để nhãn nhất quán và chấm OKS công bằng.
 
-## 1. Luật bắt buộc (đã thống nhất cả lớp - không sửa)
+## Quy ước cờ visibility (áp dụng chung)
 
-- Bộ 17 điểm COCO, đúng tên, đúng thứ tự. Lấy từ file `.SVG` chung.
-- Mọi người trong ảnh đều có **đủ 17 điểm**. Điểm không dùng được thì gắn cờ, không xoá.
-- Trái/phải tính theo **cơ thể người**, không theo bức ảnh.
-- Bị che, còn trong khung -> `v = 1`, **vẫn đặt chấm** ở vị trí ước lượng.
-- Ra ngoài mép ảnh -> `v = 0`, **không** đặt chấm.
-- Không dùng `Hidden` (`h`) - nó không được lưu vào file.
+- **v = 2** — khớp nhìn thấy rõ. Không đánh cờ.
+- **v = 1** — khớp *nằm trong khung hình* nhưng bị che (sau lưng, sau quần áo, sau người khác). **Vẫn đặt chấm ở vị trí ước lượng**, đánh cờ Occluded (`q`).
+- **v = 0** — khớp *nằm ngoài mép ảnh*, bị cắt cụt khỏi khung. Không đặt chấm, đánh cờ Outside (`o`).
+- **Không bao giờ dùng trạng thái Hidden (`h`)** — nó không được lưu và xuất ra sai.
+- Trái/phải tính **theo cơ thể người trong ảnh**, không theo hướng người xem.
 
-## 2. Luật của nhóm bạn (phải điền)
+## Luật cho HÔNG (hip)
 
-| Tình huống | Luật nhóm bạn chọn | Vì sao |
-| --- | --- | --- |
-| Hông của người mặc quần áo dài | | |
-| Tai bị tóc hoặc mũ bảo hiểm che một phần | | |
-| Người bị cắt ở mép ảnh (chỉ thấy từ hông trở lên) | | |
-| Cổ tay nằm sau tay lái / sau thân mình | | |
-| Hai người chồng lên nhau | | |
-| Người nhỏ đến mức nào thì không gán nữa | | |
+Hông gần như **không nhìn thấy trực tiếp trên bất kỳ người mặc quần áo nào** — nó là điểm giải phẫu ước lượng, không phải điểm nhìn bằng mắt.
 
-Với mỗi luật, chèn **một ảnh mẫu** (screenshot từ CVAT) thay vì chỉ viết một câu.
-Slide 12 nói rõ: khớp không có bề mặt nhìn thấy được thì phải có ảnh mẫu, không phải
-một câu văn chung chung.
+- Luật: hông của người đứng/ngồi mà thân còn trong khung → **luôn v = 1**, đặt chấm ở vị trí ước lượng (khoảng giao giữa thân và đùi, hai bên đối xứng qua trục cột sống).
+- Chỉ để **v = 0** khi phần hông thật sự bị cắt ra ngoài mép ảnh (ví dụ ảnh chỉ lấy nửa người trên).
+- Không để trống hông chỉ vì "không nhìn thấy" — che khuất là v = 1, không phải v = 0.
 
-## 3. Ba ca mơ hồ đã gặp (bắt buộc, ghi ít nhất 3)
+## Luật cho CHE TAI (ear occlusion)
 
-### Ca 1 - ảnh `______`, người thứ `___`, khớp `______`
+Tai hay bị tóc, mũ, hoặc góc đầu che.
 
-- Mơ hồ ở chỗ nào:
-- Bạn quyết thế nào:
-- Vì sao:
-- Nếu người khác quyết ngược lại thì model học sai cái gì:
+- Tai bị **tóc/mũ che một phần hoặc toàn phần** nhưng vị trí vẫn nằm trong khung → **v = 1**, đặt chấm ở chỗ ước lượng tai nằm dưới tóc.
+- Người **quay nghiêng/quay lưng** làm một tai khuất hẳn sang phía bên kia đầu nhưng vẫn trong khung ảnh → **v = 1** (ước lượng theo cấu trúc đầu), **không** để v = 0.
+- Chỉ **v = 0** khi tai nằm ngoài mép ảnh (đầu bị cắt ở cạnh khung).
 
-### Ca 2 - ảnh `______`, người thứ `___`, khớp `______`
+## Luật cho CA Ở MÉP ẢNH (image edge)
 
-- Mơ hồ ở chỗ nào:
-- Bạn quyết thế nào:
-- Vì sao:
-- Nếu người khác quyết ngược lại thì model học sai cái gì:
+- Khớp nằm **ngoài** mép ảnh → **v = 0**, không đặt chấm. Đây là trường hợp v = 0 hợp lệ duy nhất.
+- Khớp **sát mép nhưng vẫn trong khung** → gán bình thường (v = 2 nếu thấy rõ, v = 1 nếu bị che).
+- Người bị **cắt cụt ở eo/đùi** (ảnh nửa người): các khớp chân (đầu gối, cổ chân) ở dưới mép → v = 0. Các khớp thân trên vẫn gán đủ.
 
-### Ca 3 - ảnh `______`, người thứ `___`, khớp `______`
+## Ba tình huống mơ hồ và cách quyết (kèm lý do)
 
-- Mơ hồ ở chỗ nào:
-- Bạn quyết thế nào:
-- Vì sao:
-- Nếu người khác quyết ngược lại thì model học sai cái gì:
+**Tình huống 1 — Tay giấu sau lưng.**
+Người đứng chống tay ra sau, cổ tay/khuỷu tay khuất hẳn sau thân.
+→ Quyết: **v = 1**, đặt chấm ở vị trí ước lượng sau hông.
+→ Lý do: khớp vẫn trong khung, chỉ bị thân che. Để v = 0 sẽ xoá khớp khỏi bảng điểm OKS và làm model học thiếu.
 
-## 4. Sau khi so visibility report với bạn cùng nhóm
+**Tình huống 2 — Hai người đứng sát, chân người này che chân người kia.**
+→ Quyết: làm xong hẳn một người rồi mới sang người kế; khớp bị người bên cạnh che vẫn **v = 1** đặt ước lượng, và luôn kiểm bằng đường nối xem chấm có "nhảy" sang cơ thể người bên cạnh không (lỗi nhầm người).
+→ Lý do: nhầm người là lỗi nặng, phải tách bạch từng cơ thể; che bởi người khác vẫn là che (v = 1), không phải ra ngoài khung.
 
-- Khớp lệch `%v=1` nhiều nhất: `______` (bạn `___%` / họ `___%`)
-- Nguyên nhân là **guideline chưa rõ** hay **một trong hai bên gán sai**:
-- Luật mới bổ sung vào mục 2 sau khi thống nhất:
+**Tình huống 3 — Người quay mặt về phía máy, tay trái của họ xuất hiện bên phải ảnh.**
+→ Quyết: vẫn ghi **left_wrist** cho tay trái của họ, dù nó nằm ở nửa phải khung hình.
+→ Lý do: trái/phải tính theo cơ thể người, không theo bức ảnh. Mẹo kiểm: tự tưởng tượng đứng vào chỗ người đó rồi giơ tay trái. Đây là lỗi đảo trái/phải — loại nguy hiểm nhất vì augmentation lật ảnh sẽ dạy sai gấp đôi.
